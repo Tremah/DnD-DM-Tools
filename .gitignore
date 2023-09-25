@@ -1,0 +1,5 @@
+.idea/
+cmake*
+dependencies/
+imgui.ini
+doc/
