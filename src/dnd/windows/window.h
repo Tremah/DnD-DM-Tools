@@ -22,6 +22,9 @@ namespace Dnd
     virtual void update() = 0;
     virtual void shutdown() = 0;
 
+  protected:
+    bool open_ = true;
+
   };
 }
 

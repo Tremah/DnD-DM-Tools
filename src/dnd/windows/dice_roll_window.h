@@ -6,6 +6,7 @@
 
 #include <string>
 #include <utility>
+#include <chrono>
 #include <vector>
 #include <queue>
 #include <unordered_map>
@@ -33,10 +34,14 @@ namespace Dnd
      */
   struct DiceRoll
   {
-    DiceRoll(Dice die, bool queued = false) : die_{std::move(die)}, queued_{queued} {}
+    DiceRoll() = default;
+    explicit DiceRoll(Dice die, uint32_t numRolls, bool queued = false);
 
     Dice die_{};
-    uint32_t score_ = 0;
+    //How many rolls with this dice are supposed to be done
+    uint32_t numRolls_ = 0;
+    std::vector<uint32_t> scores_{};
+    std::chrono::time_point<std::chrono::system_clock> rollTime_{};
     bool queued_ = false;
 
     //ImGui flags
@@ -49,14 +54,7 @@ namespace Dnd
       *
       *  \return Random number between 1 and maxScore_.
       */
-    int roll()
-    {
-      std::mt19937 random_engine(std::random_device{}());
-      std::uniform_int_distribution<int> rngX(1, die_.maxScore_);
-
-      score_ = rngX(random_engine);
-      return score_;
-    }
+    void roll();
   };
 
   class DiceRollWindow : public Window
@@ -72,13 +70,21 @@ namespace Dnd
     std::vector<Dice> dice_{};
     std::vector<DiceRoll> diceRollQueue_{};
     std::unordered_map<int, std::vector<DiceRoll>> diceRollHistory_{};
+    std::unordered_map<std::size_t, uint32_t> diceRollCounterState_{};
+    std::unordered_map<std::size_t, bool> diceShowStatisticsWindowState_{};
+    std::vector<DiceRoll> diceRollHistoryVector_{};
+
+    //Last roll that was done by clicking a roll button
+    DiceRoll lastRoll_{};
+
 
 
     //ImGui related fields
     bool d20ResultWindowOpen = false;
 
     bool windowOpen_ = true;
-    std::unordered_map<std::size_t, uint32_t> diceRollCounterState_{};
+
+    bool d20ShowStatistics = false;
 
     void addRollToQueue(const Dice& die);
   };

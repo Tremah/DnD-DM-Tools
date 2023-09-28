@@ -16,7 +16,38 @@ namespace Dnd
   Texture loadTextureFromFile(const std::string& filePath)
   {
     Texture texture{};
-    stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(1);
+
+    //load texture
+    int channels = 0;
+    unsigned char *textureBuffer = stbi_load(filePath.c_str(), &texture.width_, &texture.height_, &channels, 4);
+    if (textureBuffer == nullptr)
+    {
+      return Texture{};
+    }
+
+    int internalFormat = 0;
+    int dataFormat = 0;
+    internalFormat = GL_RGBA8;
+    dataFormat = GL_RGBA;
+
+    glCreateTextures(GL_TEXTURE_2D, 1, &texture.textureId_);
+    //add padding to the created texture's size
+    glTextureStorage2D(texture.textureId_, 1, internalFormat, texture.width_, texture.height_);
+    //GL_NEAREST = more pixelated
+    //GL_LINEAR =  weighted average of the four surrounding pixels
+    glTextureParameteri(texture.textureId_, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(texture.textureId_, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(texture.textureId_, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTextureParameteri(texture.textureId_, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTextureSubImage2D(texture.textureId_, 0, 0, 0, texture.width_, texture.height_, dataFormat, GL_UNSIGNED_BYTE, textureBuffer);
+
+    stbi_image_free(textureBuffer);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    /*stbi_set_flip_vertically_on_load(true);
     unsigned char* image_data = stbi_load(filePath.c_str(), &texture.width_, &texture.height_, NULL, 4);
     if (image_data == NULL)
     {
@@ -35,7 +66,7 @@ namespace Dnd
 
     // Upload pixels into texture
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width_, texture.height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
-    stbi_image_free(image_data);
+    stbi_image_free(image_data);*/
 
     return texture;
   }

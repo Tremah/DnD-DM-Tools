@@ -11,7 +11,7 @@ namespace Dnd
     ImGuiIO &io = ImGui::GetIO();
     (void)io;
 
-    io.ConfigFlags = configFlags_;
+    io.ConfigFlags = imGuiConfigFlags_;
     auto& style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
@@ -20,7 +20,17 @@ namespace Dnd
     }
 
     loadStyle();
-    io.Fonts->AddFontFromFileTTF("assets/fonts/Lato-Regular.ttf", standardFontSize_);
+
+    //Build font library
+    imGuiFonts_.insert({"Lato", std::unordered_map<uint16_t, ImFont*>{}});
+    imGuiFonts_.at("Lato").insert({standardFontSize_,     io.Fonts->AddFontFromFileTTF("assets/fonts/Lato-Regular.ttf", standardFontSize_)});
+    imGuiFonts_.at("Lato").insert({standardFontSize_ - 1, io.Fonts->AddFontFromFileTTF("assets/fonts/Lato-Regular.ttf", standardFontSize_ - 1)});
+    imGuiFonts_.at("Lato").insert({standardFontSize_ - 2, io.Fonts->AddFontFromFileTTF("assets/fonts/Lato-Regular.ttf", standardFontSize_ - 2)});
+    imGuiFonts_.at("Lato").insert({standardFontSize_ - 3, io.Fonts->AddFontFromFileTTF("assets/fonts/Lato-Regular.ttf", standardFontSize_ - 3)});
+    for (std::uint8_t i = 0; i <= 40; ++i)
+    {
+      imGuiFonts_.at("Lato").insert({standardFontSize_ + i, io.Fonts->AddFontFromFileTTF("assets/fonts/Lato-Regular.ttf", standardFontSize_ + i)});
+    }
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 460");
@@ -43,7 +53,7 @@ namespace Dnd
     style.Colors[ImGuiCol_TitleBgCollapsed]   = ImVec4{darkBlue.x, darkBlue.y, darkBlue.z, 0.7f};
     style.Colors[ImGuiCol_TitleBgActive]      = lightBlue;
 
-    style.Colors[ImGuiCol_FrameBg]            = darkGray;
+    style.Colors[ImGuiCol_FrameBg]            = lightBlue;
     style.Colors[ImGuiCol_FrameBgHovered]     = darkGray;
     style.Colors[ImGuiCol_FrameBgActive]      = ImVec4(0.8f, 0.59f, 0.98f, 0.67f);
 
@@ -67,7 +77,6 @@ namespace Dnd
     style.Colors[ImGuiCol_TableBorderLight]   = lightBlue;
     style.Colors[ImGuiCol_TableRowBg]         = ImVec4{lightBlue.x, lightBlue.y, lightBlue.z, 0.2f};
     style.Colors[ImGuiCol_TableRowBgAlt]      = ImVec4{darkBlue.x, darkBlue.y, darkBlue.z, 0.2f};
-
   }
 
   void ImGuiConfig::startImGuiFrame()
@@ -78,7 +87,7 @@ namespace Dnd
 
     ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
-    //ImGui::ShowDemoWindow();
+    ImGui::ShowDemoWindow();
   }
 
   void ImGuiConfig::endImGuiFrame()

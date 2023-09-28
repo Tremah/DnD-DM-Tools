@@ -1,9 +1,10 @@
 #include "dice_roll_window.h"
 
-#include <vector>
 #include <iostream>
 
 #include <imgui/imgui.h>
+
+#include <dnd/imgui_config.h>
 
 namespace Dnd
 {
@@ -35,6 +36,15 @@ namespace Dnd
     diceRollCounterState_.insert({12, 1u});
     diceRollCounterState_.insert({20, 1u});
     diceRollCounterState_.insert({100, 1u});
+
+    //Init state for showing the dice statistics
+    diceShowStatisticsWindowState_.insert({4, false});
+    diceShowStatisticsWindowState_.insert({6, false});
+    diceShowStatisticsWindowState_.insert({8, false});
+    diceShowStatisticsWindowState_.insert({10, false});
+    diceShowStatisticsWindowState_.insert({12, false});
+    diceShowStatisticsWindowState_.insert({20, false});
+    diceShowStatisticsWindowState_.insert({100, false});
   }
 
   void DiceRollWindow::update()
@@ -56,10 +66,11 @@ namespace Dnd
         std::string dieName = "d" + std::to_string(die.maxScore_);
         if(ImGui::CollapsingHeader(dieName.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
         {
+          //Left and right arrow for the dice roll count
           std::string arrowDownName = dieName + "ArrowDown";
           if (ImGui::ArrowButton(arrowDownName.c_str(), ImGuiDir_Left))
           {
-            //Negative values
+            //Min value == 1
             diceRollCounterState_.at(die.maxScore_) = std::max(1u, --diceRollCounterState_.at(die.maxScore_));
           }
           ImGui::SameLine(0.0f, spacing);
@@ -73,125 +84,186 @@ namespace Dnd
           ImGui::Text("%d", diceRollCounterState_.at(die.maxScore_));
           ImGui::SameLine();
 
+          //Dice roll button
           std::string buttonName = "Roll " + dieName;
-          if (ImGui::Button(buttonName.c_str(), ImVec2{100, 0}))
+          if (ImGui::Button(buttonName.c_str(), ImVec2{90, 0}))
           {
-            std::cout << dieName << std::endl;
             if(diceRollCounterState_.at(die.maxScore_) > 0)
             {
-              DiceRoll roll{Dice{die.maxScore_}};
-              roll.roll();
-              roll.resultWindowOpen_ = true;
-              diceRollHistory_.at(die.maxScore_).emplace_back(std::move(roll));
+              lastRoll_ = DiceRoll{Dice{die.maxScore_}, diceRollCounterState_.at(die.maxScore_)};
+              lastRoll_.roll();
+              lastRoll_.resultWindowOpen_ = true;
+              diceRollHistory_.at(die.maxScore_).emplace_back(lastRoll_);
+              diceRollHistoryVector_.emplace_back(lastRoll_);
+              d20ResultWindowOpen = true;
             }
           }
+          ImGui::SameLine();
+          ImGui::Dummy(ImVec2{10, 0});
+          ImGui::SameLine();
+
+          //Dice show statistics window button
+          bool showStatisticsWindow = diceShowStatisticsWindowState_.at(die.maxScore_);
+          buttonName = "Show " + dieName + " Statistics";
+          if(showStatisticsWindow)
+          {
+            buttonName = "Hide " + dieName + " Statistics";
+          }
+
+          if (ImGui::Button(buttonName.c_str(), ImVec2{160, 0}))
+          {
+            diceShowStatisticsWindowState_.at(die.maxScore_) = !showStatisticsWindow ;
+          }
+
           ImGui::Dummy(ImVec2{0, 5});
 
-          auto tableStyleFlags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_Borders | ImGuiTableFlags_PadOuterX;
 
-          //Result table for each die
-          std::string tableName = dieName + "ResultTable";
-          if (ImGui::BeginTable(tableName.c_str(), 2, tableStyleFlags))
+          //Statistics table for each die
+          if(showStatisticsWindow)
           {
-            //Gather information about the roll history
-            int lastRoll = -1;
-            std::string lastFiveRoles{};
-            auto& rollHistory = diceRollHistory_.at(die.maxScore_);
-
-            if(!rollHistory.empty())
+            std::string tableName = dieName + "ResultTable";
+            auto tableStyleFlags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_Borders | ImGuiTableFlags_PadOuterX;
+            if (ImGui::BeginTable(tableName.c_str(), 2, tableStyleFlags))
             {
-              lastRoll = rollHistory.back().score_;
-              auto loopUpperEnd = rollHistory.size() <= 5 ? rollHistory.size() : 5;
-              for(std::size_t i = 0; i < loopUpperEnd; ++i)
+              //Gather information about the roll history
+              int lastScore = -1;
+              auto& rollHistory = diceRollHistory_.at(die.maxScore_);
+              std::string lastFiveScores{};
+
+              if (!rollHistory.empty())
               {
-                lastFiveRoles.append(std::to_string(rollHistory.at(rollHistory.size() - 1 - i).score_));
-                if(i < loopUpperEnd - 1)
+                lastScore = rollHistory.back().scores_.back();
+                auto maxScoresInList = 5u;
+                uint16_t rollCount = 0;
+                //Extract last 5 rolls into vector
+                std::vector<uint32_t> scoreVector{};
+                for (auto it = rollHistory.rbegin(); it < rollHistory.rend(); ++it)
                 {
-                  lastFiveRoles.append(", ");
+                  for (auto score : it->scores_)
+                  {
+                    scoreVector.push_back(score);
+                    if (scoreVector.size() == maxScoresInList)
+                    {
+                      break;
+                    }
+                  }
+                  if (scoreVector.size() >= maxScoresInList)
+                  {
+                    break;
+                  }
+                }
+
+                uint16_t scoreCount = 0;
+                maxScoresInList = maxScoresInList <= scoreVector.size() ? maxScoresInList : scoreVector.size();
+                for (auto it = scoreVector.rbegin(); it < scoreVector.rend(); ++it)
+                {
+                  lastFiveScores.append(std::to_string(*it));
+
+                  if (++scoreCount < maxScoresInList)
+                  {
+                    lastFiveScores.append(",");
+                  }
+                  else
+                  {
+                    break;
+                  }
                 }
               }
+
+              //Display table for each die
+              std::string rightColumnValue{};
+              ImGui::TableNextRow();
+              ImGui::TableNextColumn();
+              ImGui::Text("Last Roll");
+              ImGui::TableNextColumn();
+              rightColumnValue = std::to_string(lastScore);
+              if (lastScore < 0)
+              {
+                rightColumnValue.clear();
+              }
+              ImGui::Text("%s", rightColumnValue.c_str());
+
+              ImGui::TableNextColumn();
+              ImGui::Text("Last Five Rolls");
+              ImGui::TableNextColumn();
+              ImGui::Text("%s", lastFiveScores.c_str());
+              ImGui::TableNextColumn();
+
+              rightColumnValue = "Total Number Of " + dieName + "Rolls";
+              std::size_t rollCount = 0;
+              for (auto it = rollHistory.rbegin(); it < rollHistory.rend(); ++it)
+              {
+                rollCount += it->scores_.size();
+              }
+              ImGui::Text("Total Number Of  Rolls");
+              ImGui::TableNextColumn();
+              ImGui::Text("%zu", rollCount);
+              ImGui::EndTable();
+
+              //Padding between each die row
+              ImGui::Dummy(ImVec2{0, 5});
+              ImGui::Separator();
+              ImGui::Dummy(ImVec2{0, 5});
             }
-
-            //Display data
-            std::string leftColumnValue{};
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            ImGui::Text("Last Roll");
-            ImGui::TableNextColumn();
-            leftColumnValue = std::to_string(lastRoll);
-            if(lastRoll < 0)
-            {
-              leftColumnValue.clear();
-            }
-            ImGui::Text("%s",  leftColumnValue.c_str());
-
-            ImGui::TableNextColumn();
-            ImGui::Text("Last Five Rolls");
-            ImGui::TableNextColumn();
-            ImGui::Text("%s",  lastFiveRoles.c_str());
-            ImGui::TableNextColumn();
-            leftColumnValue = "Total Number Of " + dieName + "Rolls";
-            ImGui::Text("Total Number Of  Rolls");
-            ImGui::TableNextColumn();
-            ImGui::Text("%d",  rollHistory.size());
-
-            ImGui::EndTable();
           }
-
-          //Padding between each die
-          ImGui::Dummy(ImVec2{0, 5});
-          ImGui::Separator();
-          ImGui::Dummy(ImVec2{0, 5});
-
-
-
         }
       }
       ImGui::PopButtonRepeat();
 
-
-
-
-
-      /*if(d20ResultWindowOpen)
+      //Result window
+      if(d20ResultWindowOpen)
       {
-        ImGui::SetNextWindowSize(ImVec2{300, 80 + (static_cast<float>(1) * 25.f)});
-        if (!ImGui::Begin("d20 Result Table", &d20ResultWindowOpen, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking))
+        ImGui::PushFont(ImGuiConfig::imGuiFonts_.at("Lato").at(ImGuiConfig::standardFontSize_ + 20));
+        ImGui::SetNextWindowSize(ImVec2{800.f, 120.f + (lastRoll_.scores_.size() * ImGui::GetTextLineHeightWithSpacing())});
+        if(!ImGui::Begin("Dice Roll Result Window", &d20ResultWindowOpen, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking))
         {
           ImGui::End();
         }
         else
         {
-          if (!diceRollHistory_.at(20).empty())
+          std::string dieName = "d" + std::to_string(lastRoll_.die_.maxScore_) + " Score: ";
+
+          ImGui::Dummy(ImVec2{0, 25});
+          auto tableStyleFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_PadOuterX;
+          if (ImGui::BeginTable("DiceRollWindowResultTab", 3, tableStyleFlags))
           {
-            //Retrieve dice roll from history
-            auto& roll = diceRollHistory_.at(20).back();
-
-            ImGui::Dummy(ImVec2(0.0f, 1.0f));
-            auto tableStyleFlags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_Borders | ImGuiTableFlags_PadOuterX;
-
-            if (ImGui::BeginTable("d20ResultTable", 2, tableStyleFlags))
+            std::size_t i = 0;
+            for (auto& score : lastRoll_.scores_)
             {
-              ImGui::TableSetupColumn("Roll #");
-              ImGui::TableSetupColumn("Score");
-              ImGui::TableHeadersRow();
-
-              std::size_t rowCount = 1;
-              for (std::size_t i = 1; i <= rowCount; ++i)
-              {
-                ImGui::TableNextRow();
-                ImGui::TableNextColumn();
-                ImGui::Text("%s", std::to_string(i).c_str());
-                ImGui::TableNextColumn();
-                ImGui::Text("%d",  roll.score_);
-              }
-              ImGui::EndTable();
-              ImGui::Dummy(ImVec2(0.0f, 1.0f));
+              ImGui::TableNextRow();
+              ImGui::TableNextColumn();
+              ImGui::Text("%zu", ++i);
+              ImGui::TableNextColumn();
+              ImGui::Text(dieName.c_str());
+              ImGui::TableNextColumn();
+              ImGui::Text("%d", score);
             }
+            ImGui::EndTable();
           }
+          ImGui::PopFont();
           ImGui::End();
         }
-      }*/
+      }
+
+      ImGui::Dummy(ImVec2{0, 10});
+      ImGui::Text("Session Log:");
+      if (ImGui::BeginListBox("##listbox 2", ImVec2(-FLT_MIN, 40 * ImGui::GetTextLineHeightWithSpacing())))
+      {
+        for(auto diceRoll = diceRollHistoryVector_.rbegin(); diceRoll < diceRollHistoryVector_.rend(); ++diceRoll)
+        {
+          for(auto score = diceRoll->scores_.rbegin(); score < diceRoll->scores_.rend(); ++score)
+          {
+            auto dateTimeString =  std::format("{:%H:%M:%OS}", diceRoll->rollTime_);
+
+            std::string entryText = dateTimeString + ": Roll d" + std::to_string(diceRoll->die_.maxScore_) + ", score =  " + std::to_string(*score);
+            if (ImGui::Selectable(entryText.c_str(), false))
+              ;
+            ImGui::Separator();
+
+          }
+        }
+        ImGui::EndListBox();
+      }
     }
     ImGui::End();
   }
@@ -208,6 +280,22 @@ namespace Dnd
 
   void DiceRollWindow::init()
   {
+  }
 
+  void DiceRoll::roll()
+  {
+    std::mt19937 random_engine(std::random_device{}());
+    std::uniform_int_distribution<int> rngX(1, die_.maxScore_);
+
+    rollTime_ = std::chrono::system_clock::now();
+    for(std::size_t i  = 0; i < numRolls_; ++i)
+    {
+      scores_.emplace_back(rngX(random_engine));
+    }
+  }
+
+  DiceRoll::DiceRoll(Dice die, uint32_t numRolls, bool queued) : die_{die}, numRolls_{numRolls}, queued_{queued}
+  {
+    scores_.reserve(numRolls);
   }
 } // Dnd

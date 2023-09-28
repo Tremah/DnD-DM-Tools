@@ -11,6 +11,9 @@ namespace Dnd
   {
     initOpenGLComponentsForDraw();
     addTexture("MAIN_WINDOW_BACKGROUND", loadTextureFromFile("assets/textures/main_window_background.jpg"));
+    addTexture("MENU_ICON_START_SESSION", loadTextureFromFile("assets/textures/d20.png"));
+
+    instance_ = this;
   }
 
   void DmToolApp::addValue(const std::string& key, const std::string& value)
@@ -43,8 +46,16 @@ namespace Dnd
     GLuint numberOfVertices = 6;
     GLuint componentsPerVertex = 4;
 
+    auto backgroundTexture = textures_.at("MAIN_WINDOW_BACKGROUND");
+    glBindTextureUnit(0, backgroundTexture.textureId_);
+
     glBufferData(GL_ARRAY_BUFFER, numberOfVertices * componentsPerVertex * sizeof(float), vertices_.data(), GL_STATIC_DRAW);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
+  }
+
+  DmToolApp* DmToolApp::get()
+  {
+    return instance_;
   }
 }

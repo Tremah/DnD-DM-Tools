@@ -12,8 +12,10 @@
 
 #include <dnd/dm_tool_app.h>
 #include <dnd/imgui_config.h>
-#include <dnd/dm_tool_imgui_ui_elements.hpp>
+#include <dnd/windows/window.h>
+#include <dnd/windows/menu_window.h>
 #include <dnd/windows/dice_roll_window.h>
+#include <dnd/windows/party_overview_window.h>
 
 //Forward declarations
 GLFWwindow* initGLFWGLAD(int width, int height);
@@ -21,64 +23,74 @@ void renderImGuiMainMenuBar();
 
 int main()
 {
+  //Init third party libraries
+  auto windowWidth = 3400;
+  auto windowHeight = 1900;
+  auto mainWindow = initGLFWGLAD(windowWidth, windowHeight);
+
   //Declare and define variables
+  bool running = true;
   Dnd::DmToolApp dmToolApp{};
   Dnd::ImGuiConfig imGuiConfig;
 
-  auto windowWidth = 3400;
-  auto windowHeight = 1900;
-
-  auto window = initGLFWGLAD(windowWidth, windowHeight);
-
   //Init components
   dmToolApp.init();
-  imGuiConfig.initImGui(window);
+  Dnd::ImGuiConfig::initImGui(mainWindow);
 
   auto backgroundTexture = dmToolApp.getTextureByName("MAIN_WINDOW_BACKGROUND");
 
   //Setup window objects
-  Dnd::DiceRollWindow diceRollWindow;
+  std::vector<Dnd::Window*> windowList{};
+  windowList.reserve(10);
+  windowList.emplace_back(new Dnd::DiceRollWindow{});
+  windowList.emplace_back(new Dnd::PartyOverviewWindow{});
+  windowList.emplace_back(new Dnd::MenuWindow{running});
 
-  diceRollWindow.init();
+  for(auto window : windowList)
+  {
+    window->init();
+  }
 
   ImGuiIO &io = ImGui::GetIO();
   (void)io;
 
-  bool running = true;
   while (running)
   {
     glfwPollEvents();
     glClearColor(0.2f, 0.2f, 0.2f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    imGuiConfig.startImGuiFrame();
+    Dnd::ImGuiConfig::startImGuiFrame();
     renderImGuiMainMenuBar();
 
     //Update
     dmToolApp.drawBackgroundImage();
-    diceRollWindow.update();
-    Dnd::makePartyWindow();
+    for(auto window : windowList)
+    {
+      window->update();
+    }
 
-    imGuiConfig.endImGuiFrame();
-    glfwSwapBuffers(window);
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwWindowShouldClose(window))
+    Dnd::ImGuiConfig::endImGuiFrame();
+    glfwSwapBuffers(mainWindow);
+    if (glfwGetKey(mainWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwWindowShouldClose(mainWindow))
     {
       running = false;
     }
   }
 
+  for(auto window : windowList)
+  {
+    window->shutdown();
+  }
 
-
-  diceRollWindow.shutdown();
 
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
 
   glfwMakeContextCurrent(NULL);
-  glfwDestroyWindow(window);
+  glfwDestroyWindow(mainWindow);
   glfwTerminate();
-
 
   return 0;
 }

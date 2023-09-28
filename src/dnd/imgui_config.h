@@ -3,6 +3,8 @@
 #define DND_DM_TOOLS_IMGUI_CONFIG_H
 
 #include <cstdint>
+#include <string>
+#include <unordered_map>
 
 #include <glfw/glfw3.h>
 #include <imgui/imgui.h>
@@ -14,22 +16,25 @@ namespace Dnd
     ImGuiConfig() = default;
 
     //ImGui global config
-    ImGuiConfigFlags configFlags_ = ImGuiConfigFlags_NavEnableKeyboard |
-                                    ImGuiConfigFlags_DockingEnable |
-                                    ImGuiConfigFlags_ViewportsEnable |
-                                    ImGuiDockNodeFlags_PassthruCentralNode;
+    inline static ImGuiConfigFlags imGuiConfigFlags_ = ImGuiConfigFlags_NavEnableKeyboard |
+                                                       ImGuiConfigFlags_DockingEnable |
+                                                       ImGuiConfigFlags_ViewportsEnable |
+                                                       ImGuiDockNodeFlags_PassthruCentralNode;
+
+    //We only use one font, in different sizes, accessed by their size
+    inline static std::unordered_map<std::string, std::unordered_map<uint16_t, ImFont*>> imGuiFonts_{};
+
     //Font
-    const uint8_t standardFontSize_ = 20;
+    static const uint8_t standardFontSize_ = 20;
 
     //Functions
-    void initImGui(GLFWwindow* window);
+    static void initImGui(GLFWwindow* window);
 
-    void startImGuiFrame();
+    static void startImGuiFrame();
 
-    void endImGuiFrame();
+    static void endImGuiFrame();
 
-    void loadStyle();
-
+    static void loadStyle();
 
   };
 

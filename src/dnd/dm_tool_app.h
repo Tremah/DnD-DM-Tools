@@ -34,7 +34,10 @@ namespace Dnd
 
     const Texture& getTextureByName(const std::string& name) const;
 
+    static DmToolApp* get();
+
   private:
+    inline static DmToolApp* instance_ = nullptr;
     OpenGLData openGLData_{};
 
     std::unordered_map<std::string, std::string> imguiValues_{};
