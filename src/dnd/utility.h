@@ -1,14 +1,12 @@
-
-
 #pragma once
-#ifndef DND_DM_TOOLS_UTILITY_H
-#define DND_DM_TOOLS_UTILITY_H
+#ifndef DND_UTILITY_H
+#define DND_UTILITY_H
 
 #include <string>
 
 #include <glad/gl.h>
 
-#include <dnd/types.h>
+#include "dnd/data/types.h"
 
 namespace Dnd
 {
@@ -39,6 +37,17 @@ namespace Dnd
   */
   CsvValues parseCsvToMap(const std::string& filePath);
 
+  template <typename EnumType>
+  constexpr auto enumToIntegral(EnumType enumeration) -> std::underlying_type_t<EnumType>
+  {
+    return static_cast<std::underlying_type_t<EnumType>>(enumeration);
+  }
+
+  template <typename EnumType, typename ValueType>
+  constexpr auto integralToEnum(ValueType item) -> EnumType
+  {
+    return static_cast<EnumType>(item);
+  }
 }
 
-#endif //DND_DM_TOOLS_UTILITY_H
+#endif //DND_UTILITY_H

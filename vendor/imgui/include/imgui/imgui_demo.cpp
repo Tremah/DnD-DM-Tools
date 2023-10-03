@@ -749,7 +749,6 @@ static void ShowDemoWindowWidgets()
         }
 
         ImGui::SeparatorText("Drags");
-
         {
             IMGUI_DEMO_MARKER("Widgets/Basic/DragInt, DragFloat");
             static int i1 = 50, i2 = 42;

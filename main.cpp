@@ -29,7 +29,6 @@ int main()
   auto mainWindow = initGLFWGLAD(windowWidth, windowHeight);
 
   //Declare and define variables
-  bool running = true;
   Dnd::DmToolApp dmToolApp{};
   Dnd::ImGuiConfig imGuiConfig;
 
@@ -37,24 +36,7 @@ int main()
   dmToolApp.init();
   Dnd::ImGuiConfig::initImGui(mainWindow);
 
-  auto backgroundTexture = dmToolApp.getTextureByName("MAIN_WINDOW_BACKGROUND");
-
-  //Setup window objects
-  std::vector<Dnd::Window*> windowList{};
-  windowList.reserve(10);
-  windowList.emplace_back(new Dnd::DiceRollWindow{});
-  windowList.emplace_back(new Dnd::PartyOverviewWindow{});
-  windowList.emplace_back(new Dnd::MenuWindow{running});
-
-  for(auto window : windowList)
-  {
-    window->init();
-  }
-
-  ImGuiIO &io = ImGui::GetIO();
-  (void)io;
-
-  while (running)
+  while (dmToolApp.isRunning())
   {
     glfwPollEvents();
     glClearColor(0.2f, 0.2f, 0.2f, 1.f);
@@ -63,31 +45,19 @@ int main()
     Dnd::ImGuiConfig::startImGuiFrame();
     renderImGuiMainMenuBar();
 
-    //Update
-    dmToolApp.drawBackgroundImage();
-    for(auto window : windowList)
-    {
-      window->update();
-    }
+    dmToolApp.update();
 
     Dnd::ImGuiConfig::endImGuiFrame();
     glfwSwapBuffers(mainWindow);
     if (glfwGetKey(mainWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwWindowShouldClose(mainWindow))
     {
-      running = false;
+      dmToolApp.setRunning(false);
     }
   }
 
-  for(auto window : windowList)
-  {
-    window->shutdown();
-  }
+  Dnd::ImGuiConfig::shutdownImGui();
 
-
-  ImGui_ImplOpenGL3_Shutdown();
-  ImGui_ImplGlfw_Shutdown();
-  ImGui::DestroyContext();
-
+  //Shutdown GLFW
   glfwMakeContextCurrent(NULL);
   glfwDestroyWindow(mainWindow);
   glfwTerminate();

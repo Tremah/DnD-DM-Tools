@@ -26,7 +26,7 @@ namespace Dnd
           if (ImGui::BeginTable("table", 2, tableStyleFlags))
           {
             //One table row for each property
-            //Table is transposed on input, because of the vizualization within the app
+            //Table is transposed on input, because of the visualisation within the app
             for (std::size_t propertyRowIndex = 0; propertyRowIndex < characterProperties_.numColumns_; ++propertyRowIndex)
             {
               ImGui::TableNextRow();

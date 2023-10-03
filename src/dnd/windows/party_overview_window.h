@@ -11,7 +11,7 @@ namespace Dnd
   class PartyOverviewWindow : public Window
   {
   public:
-    PartyOverviewWindow() = default;
+    PartyOverviewWindow() : Window(true) {}
 
     void init() override;
     void update() override;

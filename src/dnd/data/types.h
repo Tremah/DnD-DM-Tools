@@ -1,29 +1,28 @@
-//
-// Created by micro on 24/09/2023.
-//
-
+#pragma once
 #ifndef DND_DM_TOOLS_TYPES_H
 #define DND_DM_TOOLS_TYPES_H
 
+#include <iostream>
 #include <string>
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
 
-#include <glad/gl.h>
-
 namespace Dnd
 {
+  //Types used by the application
 
+  //Aliases
   using CsvValueMapType = std::unordered_map<std::string, std::vector<std::string>>;
 
+  //Application related types
   struct Texture
   {
   public:
     Texture() = default;
 
     std::string name_{};
-    GLuint textureId_ = -1;
+    int textureId_ = -1;
     int width_ = 0;
     int height_ = 0;
   };
@@ -33,13 +32,14 @@ namespace Dnd
   public:
     OpenGLData() = default;
 
-    GLuint vertexArrayId_ = -1;
-    GLuint vertexBufferId_ = -1;
+    int vertexArrayId_ = -1;
+    int vertexBufferId_ = -1;
 
-    GLuint shaderId_ = -1;
+    int shaderId_ = -1;
     std::string shaderName_{};
   };
 
+  //Misc
   struct CsvValues
   {
     CsvValues() = default;

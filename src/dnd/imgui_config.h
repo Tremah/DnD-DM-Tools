@@ -34,6 +34,8 @@ namespace Dnd
 
     static void endImGuiFrame();
 
+    static void shutdownImGui();
+
     static void loadStyle();
 
   };

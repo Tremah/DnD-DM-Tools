@@ -1,6 +1,10 @@
 #include "menu_window.h"
 
+#include <iostream>
+#include <string>
+
 #include <imgui/imgui.h>
+#include <nlohmann/json.hpp>
 
 #include <dnd/dm_tool_app.h>
 
@@ -8,14 +12,16 @@ namespace Dnd
 {
   void MenuWindow::init()
   {
-
+    characterEditorWindow_ = new CharacterEditorWindow{};
+    characterEditorWindow_->init();
+    DmToolApp::get()->addWindow(characterEditorWindow_);
   }
 
   void MenuWindow::update()
   {
-    if(open_)
+    if(visible_)
     {
-      if(!ImGui::Begin("Menu", &open_, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar))
+      if(!ImGui::Begin("Menu", &visible_, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar))
       {
         ImGui::End();
       }
@@ -33,7 +39,26 @@ namespace Dnd
 
         ImGui::Dummy(buttonSpacingX);
         ImGui::SameLine();
-        ImGui::Button("Start Combat", standardSize);
+
+        std::string buttonName = "Open Combat Window";
+        ImGui::Button(buttonName.c_str(), ImVec2{ImGui::GetFontSize() * 9, 80});
+        ImGui::SameLine();
+
+        ImGui::Dummy(buttonSpacingX);
+        ImGui::SameLine();
+
+        buttonName = "Open Character Editor";
+        if(characterEditorWindow_->isVisible())
+        {
+          buttonName = "Close Character Editor";
+        }
+        if(ImGui::Button(buttonName.c_str(), ImVec2{ImGui::GetFontSize() * 9, 80}))
+        {
+          if(characterEditorWindow_)
+          {
+            characterEditorWindow_->setVisibility(!characterEditorWindow_->isVisible());
+          }
+        }
         ImGui::SameLine();
 
         ImGui::Dummy(buttonSpacingX);
@@ -57,4 +82,5 @@ namespace Dnd
   {
 
   }
+
 } // Dnd

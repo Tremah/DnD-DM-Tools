@@ -31,7 +31,10 @@ namespace Dnd
     internalFormat = GL_RGBA8;
     dataFormat = GL_RGBA;
 
-    glCreateTextures(GL_TEXTURE_2D, 1, &texture.textureId_);
+    GLuint textureId = 0;
+
+    glCreateTextures(GL_TEXTURE_2D, 1, &textureId);
+    texture.textureId_ = textureId;
     //add padding to the created texture's size
     glTextureStorage2D(texture.textureId_, 1, internalFormat, texture.width_, texture.height_);
     //GL_NEAREST = more pixelated
@@ -46,27 +49,6 @@ namespace Dnd
     stbi_image_free(textureBuffer);
 
     glBindTexture(GL_TEXTURE_2D, 0);
-
-    /*stbi_set_flip_vertically_on_load(true);
-    unsigned char* image_data = stbi_load(filePath.c_str(), &texture.width_, &texture.height_, NULL, 4);
-    if (image_data == NULL)
-    {
-      return Texture{};
-    }
-
-    // Create a OpenGL texture identifier
-    glGenTextures(1, &texture.textureId_);
-    glBindTexture(GL_TEXTURE_2D, texture.textureId_);
-
-    // Setup filtering parameters for display
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
-
-    // Upload pixels into texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width_, texture.height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
-    stbi_image_free(image_data);*/
 
     return texture;
   }

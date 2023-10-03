@@ -3,12 +3,12 @@
 #include <iostream>
 
 #include <imgui/imgui.h>
-
 #include <dnd/imgui_config.h>
+#include <dnd/dm_tool_app.h>
 
 namespace Dnd
 {
-  DiceRollWindow::DiceRollWindow() : Window()
+  DiceRollWindow::DiceRollWindow() : Window(true)
   {
     //Define available dice
     dice_.emplace_back(4);
@@ -94,7 +94,17 @@ namespace Dnd
               lastRoll_.roll();
               lastRoll_.resultWindowOpen_ = true;
               diceRollHistory_.at(die.maxScore_).emplace_back(lastRoll_);
-              diceRollHistoryVector_.emplace_back(lastRoll_);
+
+              DmToolApp::get()->getLogWindow()->addEntry("Roll " + std::to_string(lastRoll_.numRolls_) + " d" + std::to_string(lastRoll_.die_.maxScore_));
+              std::size_t rollCount = 0;
+              for(auto& score : lastRoll_.scores_)
+              {
+                ++rollCount;
+                std::string entry = "d" + std::to_string(lastRoll_.die_.maxScore_) + " roll " + std::to_string(rollCount) + ": " + std::to_string(score);
+                DmToolApp::get()->getLogWindow()->addEntry(entry);
+              }
+              DmToolApp::get()->getLogWindow()->addEmptyLine();
+
               d20ResultWindowOpen = true;
             }
           }
@@ -245,6 +255,7 @@ namespace Dnd
         }
       }
 
+      /*
       ImGui::Dummy(ImVec2{0, 10});
       ImGui::Text("Session Log:");
       if (ImGui::BeginListBox("##listbox 2", ImVec2(-FLT_MIN, 40 * ImGui::GetTextLineHeightWithSpacing())))
@@ -263,7 +274,12 @@ namespace Dnd
           }
         }
         ImGui::EndListBox();
-      }
+        ImGui::Dummy(ImVec2{0.f, 10.f});
+        if(ImGui::Button("Clear Log"))
+        {
+
+        }
+      }*/
     }
     ImGui::End();
   }
